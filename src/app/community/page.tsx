@@ -52,6 +52,9 @@ export default function Community() {
             - Open source and DevOps conference
           </li>
         </ul>
+        <a  href="/" className="mt-8 px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
+          Back to Home
+        </a>
       </main>
     );
   }
