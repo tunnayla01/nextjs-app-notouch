@@ -12,6 +12,7 @@ export default function Home() {
           width={200}
           height={200}
           className="rounded-full mt-8 mx-auto"
+          unoptimized
         />
       </header>
 
