@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   deploy:
     docker:
-      - image: cimg/node:20.10  # Node.js environment
+      - image: cimg/node:20.10  # Node.js environment with npm
     working_directory: ~/project
     steps:
       - checkout
@@ -13,17 +13,16 @@ jobs:
           name: Install Dependencies
           command: npm install
 
-      # Build Next.js app
+      # Build the Next.js app
       - run:
           name: Build Next.js App
           command: npm run build
 
-      # Add SSH key (configure in CircleCI Project Settings)
+      # Add SSH key (CircleCI injects SSH_PRIVATE_KEY automatically)
       - add_ssh_keys:
           fingerprints:
-            # Add your Lightsail SSH key fingerprint here
-            # - "MD5:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
-            
+            - "FILL_IN_YOUR_KEY_FINGERPRINT_HERE"
+
       # Add server to known hosts
       - run:
           name: Add server to known hosts
@@ -31,7 +30,7 @@ jobs:
 
       # Deploy to Lightsail
       - run:
-          name: Deploy Next.js App
+          name: Deploy to Lightsail
           command: >
             ssh $SERVER_USER@$SERVER_HOST "
               APP_DIR='/var/www/nextjs-app-notouch';
@@ -58,7 +57,7 @@ jobs:
             "
 
 workflows:
-  build_and_deploy:
+  deploy_workflow:
     jobs:
       - deploy
 
