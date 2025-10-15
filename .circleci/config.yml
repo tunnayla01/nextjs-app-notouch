@@ -1,11 +1,9 @@
 version: 2.1
-orbs:
-  cypress: cypress-io/cypress@3
 
 jobs:
   test:
     docker:
-      - image: cimg/node:20.10.0 # Use a Node.js image
+      - image: cimg/node:20.10.0
     steps:
       - checkout
       - run:
@@ -13,53 +11,45 @@ jobs:
           command: npm install
       - run:
           name: Run Cypress E2E Tests
-          # Use the 'npx cypress run' command directly for simplicity
-          # The Cypress orb is great but this is more explicit for learning
           command: npx cypress run --headless --browser chrome
 
   deploy:
     docker:
-      - image: cimg/base:2024.01 # A basic image with git and ssh
+      - image: cimg/base:2024.01
     steps:
       - add_ssh_keys:
           fingerprints:
-            # You can get your key's fingerprint by running:
-            # ssh-keygen -E md5 -lf ~/.ssh/circleci_deploy_key
-            # Add that fingerprint here. Or leave it commented out.
+            # Add your SSH key fingerprint here if needed
             # - "MD5:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
       - run:
           name: Add Server to Known Hosts
-          command: |
-            ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+          command: ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
       - run:
           name: Deploy Application
-          command: |
-            ssh $SERVER_USER@$SERVER_HOST << 'EOF'
-              # This is the Idempotent Deployment Script
-              APP_DIR="/var/www/nextjs-app"
-              GIT_REPO="https://github.com/YOUR_USERNAME/nextjs-app.git" # IMPORTANT: Change this!
+          command: >
+            ssh $SERVER_USER@$SERVER_HOST "
+              APP_DIR='/var/www/nextjs-app';
+              GIT_REPO='https://github.com/YOUR_USERNAME/nextjs-app.git';
 
-              if [ -d "$APP_DIR/.git" ]; then
-                # Directory exists, it's an update
-                echo "--- Updating existing application ---"
-                cd $APP_DIR
-                git pull origin main
-                npm install
-                npm run build
-                pm2 reload nextjs-app
+              if [ -d \"\$APP_DIR/.git\" ]; then
+                echo '--- Updating existing application ---';
+                cd \$APP_DIR &&
+                git pull origin main &&
+                npm install &&
+                npm run build &&
+                pm2 reload nextjs-app;
               else
-                # Directory does not exist, it's the first deployment
-                echo "--- Performing initial deployment ---"
-                git clone $GIT_REPO $APP_DIR
-                cd $APP_DIR
-                npm install
-                npm run build
-                pm2 start ecosystem.config.js --env production
-                pm2 save
-                # Nginx is already configured, we just needed the app to start
+                echo '--- Performing initial deployment ---';
+                git clone \$GIT_REPO \$APP_DIR &&
+                cd \$APP_DIR &&
+                npm install &&
+                npm run build &&
+                pm2 start ecosystem.config.js --env production &&
+                pm2 save;
               fi
-              echo "--- Deployment successful ---"
-            EOF
+
+              echo '--- Deployment successful ---';
+            "
 
 workflows:
   test_and_deploy:
@@ -71,4 +61,4 @@ workflows:
           filters:
             branches:
               only:
-                - main # Or 'master' depending on your repo's default branch
+                - main
