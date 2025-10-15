@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cypress/included:15.4.0  # Cypress with dependencies
+      - image: cypress/included:15.4.0  # Cypress + dependencies included
     working_directory: ~/project
     steps:
       - checkout
@@ -19,28 +19,28 @@ jobs:
           name: Install Dependencies
           command: npm install
 
-      # Save node_modules cache
+      # Save cache
       - save_cache:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package-lock.json" }}
 
-      # Build the Next.js app
+      # Build Next.js app
       - run:
           name: Build Next.js App
           command: npm run build
 
-      # Start Next.js server in background for Cypress
+      # Start server in background
       - run:
           name: Start Next.js server
           command: npm run start &
 
-      # Wait for the server to be ready
+      # Wait for server to be ready
       - run:
           name: Wait for server
           command: npx wait-on http://localhost:3000
 
-      # Run Cypress tests headlessly
+      # Run Cypress tests
       - run:
           name: Run Cypress E2E Tests
           command: npx cypress run --headless --browser chrome
