@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/node:20.10.0
+      - image: cypress/base:18 # Official Cypress base image with all dependencies
     steps:
       - checkout
       - run:
@@ -29,7 +29,7 @@ jobs:
           command: >
             ssh $SERVER_USER@$SERVER_HOST "
               APP_DIR='/var/www/nextjs-app';
-              GIT_REPO='https://github.com/YOUR_USERNAME/nextjs-app.git';
+              GIT_REPO='git@github.com:tunnayla01/nextjs-app-notouch.git';
 
               if [ -d \"\$APP_DIR/.git\" ]; then
                 echo '--- Updating existing application ---';
