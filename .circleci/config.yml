@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cypress/base:18 # Official Cypress base image with all dependencies
+      - image: cypress/included:15.4.0
     steps:
       - checkout
       - run:
