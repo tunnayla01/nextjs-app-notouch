@@ -3,63 +3,62 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cypress/included:15.4.0
+      - image: cypress/included:15.4.0  # Cypress with all dependencies preinstalled
+    working_directory: ~/project
     steps:
       - checkout
+
+      # Restore cached node_modules
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+
+      # Install project dependencies
       - run:
           name: Install Dependencies
           command: npm install
+
+      # Save cache for node_modules
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+
+      # Build the Next.js app
+      - run:
+          name: Build Next.js App
+          command: npm run build
+
+      # Start Next.js server in the background
+      - run:
+          name: Start Next.js server
+          command: npm run start &
+
+      # Wait until the server is ready
+      - run:
+          name: Wait for server
+          command: npx wait-on http://localhost:3000
+
+      # Restore Cypress cache
+      - restore_cache:
+          keys:
+            - v1-cypress-{{ checksum "package-lock.json" }}
+            - v1-cypress-
+
+      # Run Cypress tests headlessly
       - run:
           name: Run Cypress E2E Tests
           command: npx cypress run --headless --browser chrome
 
-  deploy:
-    docker:
-      - image: cimg/base:2024.01
-    steps:
-      - add_ssh_keys:
-          fingerprints:
-            # Add your SSH key fingerprint here if needed
-            # - "MD5:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
-      - run:
-          name: Add Server to Known Hosts
-          command: ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
-      - run:
-          name: Deploy Application
-          command: >
-            ssh $SERVER_USER@$SERVER_HOST "
-              APP_DIR='/var/www/nextjs-app';
-              GIT_REPO='git@github.com:tunnayla01/nextjs-app-notouch.git';
-
-              if [ -d \"\$APP_DIR/.git\" ]; then
-                echo '--- Updating existing application ---';
-                cd \$APP_DIR &&
-                git pull origin main &&
-                npm install &&
-                npm run build &&
-                pm2 reload nextjs-app;
-              else
-                echo '--- Performing initial deployment ---';
-                git clone \$GIT_REPO \$APP_DIR &&
-                cd \$APP_DIR &&
-                npm install &&
-                npm run build &&
-                pm2 start ecosystem.config.js --env production &&
-                pm2 save;
-              fi
-
-              echo '--- Deployment successful ---';
-            "
+      # Save Cypress cache
+      - save_cache:
+          paths:
+            - ~/.cache/Cypress
+          key: v1-cypress-{{ checksum "package-lock.json" }}
 
 workflows:
-  test_and_deploy:
+  test_only:
     jobs:
       - test
-      - deploy:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - main
 
