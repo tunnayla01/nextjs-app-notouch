@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cypress/included:15.4.0  # Cypress + dependencies
+      - image: cypress/included:15.4.0  # Cypress + dependencies preinstalled
     working_directory: ~/project
     steps:
       - checkout
@@ -13,7 +13,7 @@ jobs:
           name: Install Dependencies
           command: npm install
 
-      # Run Cypress tests directly against Lightsail
+      # Run Cypress headlessly
       - run:
           name: Run Cypress E2E Tests
           command: npx cypress run --headless --browser chrome
